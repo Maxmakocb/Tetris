@@ -50,7 +50,7 @@ public:
 		for (int i = 0; i < int(this->nodes.size()); i++) {
 			if (this->nodes[i]->value == after) {
 				this->nodes[i]->nodes.push_back(new Node(add));
-				return true;
+				found = true;
 			}
 			found = this->nodes[i]->addNode<T>(add, after, false);
 			if (found) {
@@ -64,7 +64,7 @@ public:
 			}
 		}
 
-		return false;
+		return found;
 	}
 
 template<typename T>

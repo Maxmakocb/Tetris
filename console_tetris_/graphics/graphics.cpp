@@ -289,15 +289,50 @@ std::vector<geometry::Shape> geometry::Shape::collapse()
         }
     }
     auto trees = tree.toVectorArray<geometry::Point>();
-    for (int i = 1; i < trees.size(); i++) {
-        std::sort<>(trees[i].begin(), trees[i].end(), [](geometry::Point a, geometry::Point b) {
-                if (a.x > b.x || (a.x < b.x && a.y > b.y)) {
-                    return true;
+
+    for (int i = 0; i < trees.size(); i++) {
+        for (int j = 0; j < trees.size(); j++) {
+            if (i != j) {
+                bool common = false;
+                for (int k = 0; k < trees[i].size() && !common; k++) {
+                    for (int m = 0; m < trees[j].size() && !common; m++) {
+                        if (trees[i][k] == trees[j][m]) {
+                            trees[i].insert(trees[i].end(), trees[j].begin(), trees[j].end());
+                            common = true;
+                        }
+                    }
                 }
-                return false;
+            }
+        }
+    }
+
+    for (int i = 0; i < trees.size(); i++) {
+        std::sort<>(trees[i].begin(), trees[i].end(), [](geometry::Point a, geometry::Point b) {
+            if (a.x > b.x || (a.x == b.x && a.y > b.y)) {
+                return true;
+            }
+            return false;
             });
     }
-    std::unique(trees.begin(), trees.end(), [](std::vector<geometry::Point> a, std::vector<geometry::Point> b) {
+
+    for (int i = 0; i < trees.size(); i++) {
+        auto last = std::unique(trees[i].begin(), trees[i].end());
+        trees[i].erase(last, trees[i].end());
+    }
+
+    // this sorting is not extreme proof, but will work here fine
+    std::sort<>(trees.begin(), trees.end(), [](std::vector<geometry::Point> a, std::vector<geometry::Point> b) {
+        if (a.size() != b.size()) {
+            return a.size() > b.size();
+        }
+        for (int i = 0; i < a.size(); i++) {
+            if ((a[i].x > b[i].x) || (a[i].x == b[i].x && a[i].y > b[i].y)) {
+                return true;
+            }
+        }
+        return false;
+        });
+    auto last = std::unique(trees.begin(), trees.end(), [](std::vector<geometry::Point> a, std::vector<geometry::Point> b) {
             if (a.size() != b.size()) {
                 return false;
             }
@@ -308,6 +343,7 @@ std::vector<geometry::Shape> geometry::Shape::collapse()
             }
             return true;
         });
+    trees.erase(last, trees.end());
     if (trees.size() == 1) {
         return std::vector<geometry::Shape>{};
     }
